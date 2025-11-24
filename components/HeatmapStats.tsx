@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getData } from '../services/storageService';
 import { SleepRecord } from '../types';
@@ -173,7 +172,7 @@ const HeatmapStats: React.FC = () => {
   const COLORS = ['#fca5a5', '#fdba74', '#86efac', '#cbd5e1'];
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
        {/* Heatmap Card */}
        <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
           <div className="flex justify-between items-center mb-4">

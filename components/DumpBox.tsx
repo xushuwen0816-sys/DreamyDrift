@@ -65,7 +65,8 @@ const DumpBox: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] relative">
+    // Changed from fixed calculation to h-full to fit the new flex container
+    <div className="flex flex-col h-full relative">
        {/* Settings Modal / Panel */}
        {showSettings && (
            <div className="absolute inset-0 z-50 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm rounded-3xl p-6 flex flex-col justify-center animate-fade-in">

@@ -34,7 +34,7 @@ const Checklist: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
       <div className="bg-gradient-to-br from-warm-50 to-orange-50 dark:from-stone-800 dark:to-stone-800 p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 text-center transition-colors">
         <div className="flex justify-center mb-2">
           <Sparkles className="w-8 h-8 text-warm-500 animate-pulse" />

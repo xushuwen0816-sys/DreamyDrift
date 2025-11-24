@@ -37,11 +37,17 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-stone-900 text-stone-800 dark:text-stone-100 font-sans transition-colors duration-300">
-      <div className="max-w-md mx-auto min-h-screen flex flex-col bg-white dark:bg-stone-900 shadow-2xl overflow-hidden relative transition-colors duration-300">
+    <div className="min-h-screen bg-warm-50 dark:bg-stone-900 text-stone-800 dark:text-stone-100 font-sans transition-colors duration-300 flex justify-center">
+      {/* 
+        Layout Change: 
+        Use h-[100dvh] to fix the app height to the viewport.
+        flex-col ensures Header (top) and Nav (bottom) stay put.
+        The middle <main> takes remaining space and handles scrolling.
+      */}
+      <div className="w-full max-w-md h-[100dvh] flex flex-col bg-white dark:bg-stone-900 shadow-2xl overflow-hidden relative transition-colors duration-300">
         
-        {/* Header */}
-        <header className="pt-8 pb-4 px-6 bg-white dark:bg-stone-900 sticky top-0 z-20 flex justify-between items-center transition-colors">
+        {/* Header - Fixed at top (flex-none) */}
+        <header className="pt-8 pb-4 px-6 bg-white dark:bg-stone-900 z-20 flex justify-between items-center transition-colors flex-shrink-0">
            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-warm-100 dark:bg-stone-800 flex items-center justify-center">
                  <Moon className="w-5 h-5 text-warm-600 dark:text-warm-400 fill-warm-600 dark:fill-warm-400" />
@@ -58,13 +64,17 @@ const App: React.FC = () => {
            </button>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 px-4 py-4 overflow-y-auto scrollbar-hide">
+        {/* 
+          Main Content - Takes remaining space (flex-1).
+          For most tabs, this container handles scrolling (overflow-y-auto).
+          For DumpBox, we disable scroll here (overflow-hidden) so DumpBox can manage its own chat scroll view.
+        */}
+        <main className={`flex-1 px-4 py-4 ${activeTab === Tab.DUMP ? 'overflow-hidden' : 'overflow-y-auto scrollbar-hide'}`}>
            {renderContent()}
         </main>
 
-        {/* Bottom Navigation */}
-        <nav className="bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border-t border-stone-100 dark:border-stone-800 p-2 pb-6 sticky bottom-0 z-30 transition-colors">
+        {/* Bottom Navigation - Fixed at bottom (flex-none) */}
+        <nav className="bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border-t border-stone-100 dark:border-stone-800 p-2 pb-6 z-30 transition-colors flex-shrink-0">
           <ul className="flex justify-around items-center">
             <NavItem 
                active={activeTab === Tab.RECORD} 

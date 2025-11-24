@@ -81,7 +81,7 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
       <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 transition-colors">
         <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
           <Moon className="w-6 h-6 text-warm-500" />
