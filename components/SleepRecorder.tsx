@@ -82,7 +82,7 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 transition-colors">
+      <div className="bg-white dark:bg-stone-800 p-5 sm:p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 transition-colors">
         <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
           <Moon className="w-6 h-6 text-warm-500" />
           睡眠日记
@@ -96,9 +96,11 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
               type="date" 
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full p-3 bg-stone-50 dark:bg-stone-700 rounded-xl border-none focus:ring-2 focus:ring-warm-200 outline-none text-stone-700 dark:text-stone-200 font-semibold"
+              // Modified: pl-12 for icon space, pr-4 to avoid native indicator overlap issues if any
+              className="w-full pl-12 pr-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl border-none focus:ring-2 focus:ring-warm-200 outline-none text-stone-700 dark:text-stone-200 font-semibold appearance-none"
             />
-            <Calendar className="absolute right-4 top-3.5 w-5 h-5 text-stone-400 pointer-events-none" />
+            {/* Modified: Moved icon to left (left-4) */}
+            <Calendar className="absolute left-4 top-3.5 w-5 h-5 text-stone-400 pointer-events-none" />
           </div>
         </div>
 
@@ -112,7 +114,8 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
                 type="time" 
                 value={bedTime}
                 onChange={(e) => setBedTime(e.target.value)}
-                className="w-full bg-white dark:bg-slate-700 p-2 rounded-lg text-xl text-center font-bold text-blue-600 dark:text-blue-300 focus:outline-none"
+                // Modified: min-w-0, max-w-full, text-lg
+                className="w-full min-w-0 max-w-full bg-white dark:bg-slate-700 p-2 rounded-lg text-lg sm:text-xl text-center font-bold text-blue-600 dark:text-blue-300 focus:outline-none appearance-none"
               />
            </div>
 
@@ -125,7 +128,8 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
                 type="time" 
                 value={sleepTime}
                 onChange={(e) => setSleepTime(e.target.value)}
-                className="w-full bg-white dark:bg-stone-700 p-2 rounded-lg text-xl text-center font-bold text-warm-600 dark:text-warm-300 focus:outline-none"
+                // Modified: min-w-0, max-w-full, text-lg
+                className="w-full min-w-0 max-w-full bg-white dark:bg-stone-700 p-2 rounded-lg text-lg sm:text-xl text-center font-bold text-warm-600 dark:text-warm-300 focus:outline-none appearance-none"
               />
               {isLate && (
                 <div className="mt-2 text-center text-xs font-bold text-rose-500 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-300 py-1 px-2 rounded-full inline-block">
@@ -143,7 +147,8 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
                 type="time" 
                 value={wakeTime}
                 onChange={(e) => setWakeTime(e.target.value)}
-                className="w-full bg-white dark:bg-amber-900/40 p-2 rounded-lg text-xl text-center font-bold text-amber-600 dark:text-amber-400 focus:outline-none"
+                // Modified: min-w-0, max-w-full, text-lg
+                className="w-full min-w-0 max-w-full bg-white dark:bg-amber-900/40 p-2 rounded-lg text-lg sm:text-xl text-center font-bold text-amber-600 dark:text-amber-400 focus:outline-none appearance-none"
               />
            </div>
         </div>
@@ -157,7 +162,7 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
 
       {/* Late Reasons Section */}
       {isLate && (
-        <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 animate-fade-in">
+        <div className="bg-white dark:bg-stone-800 p-5 sm:p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 animate-fade-in">
           <h3 className="text-lg font-bold text-stone-800 dark:text-stone-100 mb-2">为什么这么晚？🥺</h3>
           <p className="text-stone-500 dark:text-stone-400 text-sm mb-4">诚实记录，才能更好地调整哦。</p>
           
