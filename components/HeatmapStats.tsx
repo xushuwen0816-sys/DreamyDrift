@@ -3,12 +3,16 @@ import { getData } from '../services/storageService';
 import { SleepRecord } from '../types';
 import { LATE_REASONS } from '../constants';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Calendar, TrendingUp, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles, BatteryWarning, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, TrendingUp, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BatteryWarning, CheckCircle2, AlertCircle, X, Moon, Sun, Clock } from 'lucide-react';
 
 const HeatmapStats: React.FC = () => {
   const [records, setRecords] = useState<SleepRecord[]>([]);
   const [showStandards, setShowStandards] = useState(false);
   const [viewDate, setViewDate] = useState(new Date()); // Tracks the currently viewed month
+  
+  // Modal State
+  const [selectedRecord, setSelectedRecord] = useState<SleepRecord | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   useEffect(() => {
     const data = getData();
@@ -40,9 +44,8 @@ const HeatmapStats: React.FC = () => {
     return 'bg-rose-400'; // Bad
   };
 
-  // Weekly Stats (Always calculates based on the most recent 7 records found, regardless of view month)
+  // Weekly Stats
   const calculateWeeklyStats = () => {
-    // Sort records by date descending just to be safe, though storage usually does this
     const sorted = [...records].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const recentRecords = sorted.slice(0, 7);
     
@@ -61,10 +64,6 @@ const HeatmapStats: React.FC = () => {
 
         let start = sleepH * 60 + sleepM;
         let end = wakeH * 60 + wakeM;
-        // If wake time is technically smaller (next day) but calculation logic assumes sequential
-        // Logic fix: if start > end, it means we crossed midnight.
-        // e.g. Sleep 23:00 (1380), Wake 07:00 (420). 
-        // We need duration. (1440 - 1380) + 420 = 480.
         
         let durationMins = 0;
         if (start > end) {
@@ -120,6 +119,13 @@ const HeatmapStats: React.FC = () => {
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
   };
 
+  const handleDayClick = (record: SleepRecord | undefined) => {
+      if (record) {
+          setSelectedRecord(record);
+          setIsModalOpen(true);
+      }
+  };
+
   const renderCalendarGrid = () => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -128,7 +134,7 @@ const HeatmapStats: React.FC = () => {
     const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Sunday
 
     const slots = [];
-    // Empty slots for start offset
+    // Empty slots
     for (let i = 0; i < firstDayOfWeek; i++) {
       slots.push({ empty: true, key: `empty-${i}` });
     }
@@ -154,14 +160,10 @@ const HeatmapStats: React.FC = () => {
           return (
             <div 
               key={slot.key}
+              onClick={() => handleDayClick(record)}
               className={`aspect-square rounded-lg ${colorClass} flex items-center justify-center text-[10px] ${record ? 'text-white/90 font-bold' : 'text-stone-300 dark:text-stone-600'} cursor-pointer hover:scale-110 transition-transform relative group`}
             >
                {slot.day}
-               {record && (
-                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-stone-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10 transition-opacity">
-                    {record.sleepTime} 入睡
-                 </div>
-               )}
             </div>
           );
         })}
@@ -171,8 +173,92 @@ const HeatmapStats: React.FC = () => {
 
   const COLORS = ['#fca5a5', '#fdba74', '#86efac', '#cbd5e1'];
 
+  const RecordDetailModal = () => {
+      if (!selectedRecord) return null;
+
+      // Calculate Duration
+      const sleepH = parseInt(selectedRecord.sleepTime.split(':')[0]);
+      const sleepM = parseInt(selectedRecord.sleepTime.split(':')[1]);
+      const wakeH = parseInt(selectedRecord.wakeTime.split(':')[0]);
+      const wakeM = parseInt(selectedRecord.wakeTime.split(':')[1]);
+
+      let start = sleepH * 60 + sleepM;
+      let end = wakeH * 60 + wakeM;
+      let durationMins = 0;
+      if (start > end) {
+          durationMins = (1440 - start) + end;
+      } else {
+          durationMins = end - start;
+      }
+      const h = Math.floor(durationMins / 60);
+      const m = durationMins % 60;
+      const durationStr = `${h}小时 ${m}分`;
+
+      const reasonLabels = selectedRecord.reasons.map(id => {
+          return LATE_REASONS.find(lr => lr.id === id)?.label || id;
+      });
+
+      return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white dark:bg-stone-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative animate-scale-up">
+                  <button 
+                      onClick={() => setIsModalOpen(false)}
+                      className="absolute right-4 top-4 p-2 bg-stone-100 dark:bg-stone-700 rounded-full text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-600"
+                  >
+                      <X className="w-5 h-5" />
+                  </button>
+
+                  <h3 className="text-xl font-bold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
+                      <Calendar className="w-6 h-6 text-warm-500" />
+                      {selectedRecord.date}
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-blue-50 dark:bg-slate-800/50 p-3 rounded-2xl flex flex-col items-center justify-center">
+                          <Moon className="w-6 h-6 text-blue-500 mb-1" />
+                          <span className="text-xs text-blue-400 font-bold mb-1">入睡</span>
+                          <span className="text-xl font-bold text-blue-700 dark:text-blue-300">{selectedRecord.sleepTime}</span>
+                      </div>
+                      <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-2xl flex flex-col items-center justify-center">
+                          <Sun className="w-6 h-6 text-amber-500 mb-1" />
+                          <span className="text-xs text-amber-500 font-bold mb-1">起床</span>
+                          <span className="text-xl font-bold text-amber-700 dark:text-amber-300">{selectedRecord.wakeTime}</span>
+                      </div>
+                  </div>
+
+                  <div className="bg-stone-50 dark:bg-stone-700/50 rounded-2xl p-4 mb-6 flex justify-between items-center">
+                      <span className="text-stone-500 dark:text-stone-400 font-medium text-sm flex items-center gap-2">
+                          <Clock className="w-4 h-4" /> 睡眠时长
+                      </span>
+                      <span className="text-lg font-bold text-stone-800 dark:text-stone-100">{durationStr}</span>
+                  </div>
+
+                  {reasonLabels.length > 0 ? (
+                      <div>
+                          <h4 className="text-sm font-bold text-stone-500 dark:text-stone-400 mb-3">熬夜原因</h4>
+                          <div className="flex flex-wrap gap-2">
+                              {reasonLabels.map((label, idx) => (
+                                  <span key={idx} className="px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300 rounded-full text-sm font-medium border border-rose-100 dark:border-rose-900/30">
+                                      {label}
+                                  </span>
+                              ))}
+                          </div>
+                      </div>
+                  ) : (
+                      <div className="text-center py-2 text-emerald-500 font-medium text-sm bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                          👏 没有熬夜，非常棒！
+                      </div>
+                  )}
+              </div>
+          </div>
+      );
+  };
+
   return (
     <div className="space-y-6">
+       {/* Details Modal */}
+       {isModalOpen && <RecordDetailModal />}
+
        {/* Heatmap Card */}
        <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
           <div className="flex justify-between items-center mb-4">

@@ -8,14 +8,23 @@ import { BarChart2, CheckSquare, Moon, Trash2, Sun } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.RECORD);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Initialize from localStorage
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('dreamy_drift_theme');
+      return savedTheme === 'dark';
+    }
+    return false;
+  });
 
-  // Toggle Dark Mode Class
+  // Toggle Dark Mode Class & Persist
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('dreamy_drift_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('dreamy_drift_theme', 'light');
     }
   }, [isDarkMode]);
 

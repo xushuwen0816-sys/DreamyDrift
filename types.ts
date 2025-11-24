@@ -15,7 +15,7 @@ export interface LateReason {
 
 export interface SleepRecord {
   date: string; // YYYY-MM-DD (The "Night of")
-  bedTime: string; // HH:mm
+  // bedTime: string; // Removed as per request
   sleepTime: string; // HH:mm (The time actually fell asleep)
   wakeTime: string; // HH:mm (Next morning)
   reasons: string[]; // Array of Reason IDs
