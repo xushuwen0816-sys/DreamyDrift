@@ -15,6 +15,9 @@ const DumpBox: React.FC = () => {
   const [apiKey, setApiKey] = useState('');
   const [tempKey, setTempKey] = useState('');
 
+  // Track if we've shown the "No Key" reminder in this session
+  const hasShownMissingKeyReminder = useRef(false);
+
   useEffect(() => {
     const data = getData();
     const today = new Date().toISOString().split('T')[0];
@@ -39,6 +42,8 @@ const DumpBox: React.FC = () => {
       localStorage.setItem('dreamy_drift_api_key', tempKey.trim());
       setApiKey(tempKey.trim());
       setShowSettings(false);
+      // Reset reminder flag if they added a key, so if they remove it later, they get reminded again
+      if (tempKey.trim()) hasShownMissingKeyReminder.current = false;
   };
 
   const handleSend = async () => {
@@ -51,16 +56,70 @@ const DumpBox: React.FC = () => {
     const tempId = Date.now().toString();
     const tempEntry: DumpEntry = { id: tempId, text: userText, timestamp: Date.now() };
     
-    // Optimistic update
-    setEntries(prev => [tempEntry, ...prev]);
+    // 1. Save User Entry immediately
+    let currentData = addDumpEntry(tempEntry);
+    setEntries(currentData.dumpEntries);
 
-    // Pass the user's API key to the service
-    const aiResponse = await generateComfortingResponse(userText, apiKey);
+    // 2. Check API Key logic
+    if (!apiKey) {
+        // If no key, only show the reminder once per session
+        if (!hasShownMissingKeyReminder.current) {
+             const reminderEntry: DumpEntry = { 
+                 id: (Date.now() + 1).toString(), 
+                 text: "", // Placeholder, we only use aiResponse field effectively for "Left side"
+                 timestamp: Date.now(),
+                 aiResponse: "我在听。（由于未配置 API Key，小精灵无法回复，但烦恼已记录。）"
+             };
+             currentData = addDumpEntry(reminderEntry);
+             setEntries(currentData.dumpEntries);
+             hasShownMissingKeyReminder.current = true;
+        }
+        // If already shown, do nothing else (quietly record)
+        setLoading(false);
+        return;
+    }
+
+    // 3. If Key exists, call AI
+    try {
+        const aiResponse = await generateComfortingResponse(userText, apiKey);
+        // Update the user's entry with response? 
+        // Actually, the original logic added a NEW entry for response usually? 
+        // In the previous code: "const finalEntry: DumpEntry = { ...tempEntry, aiResponse };"
+        // It updated the user's entry to include the response. 
+        
+        // Let's stick to that pattern: Update the recently added entry to include the AI response.
+        // We need to find it in the fresh data structure.
+        // Since addDumpEntry puts it at index 0, let's grab it.
+        
+        // Wait, `addDumpEntry` appends to array top.
+        // Instead of modifying, let's just update the entry in storage.
+        // But `addDumpEntry` creates a new array.
+        
+        // Simplified: Create a new entry that holds the response? 
+        // Looking at `DumpBox` render: 
+        // {entry.aiResponse && ( ... )} is rendered *under* the user message in the same block.
+        // So we must update the `tempEntry`.
+        
+        // Update the entry in local state + storage
+        const updatedEntry = { ...tempEntry, aiResponse };
+        
+        // We need a way to update a specific entry in storage. 
+        // storageService doesn't have `updateEntry`.
+        // We'll just overwrite the top entry since we just added it.
+        // Or better, just use `addDumpEntry` again? No, that adds duplicate.
+        
+        // Let's manually update storage for this specific case
+        const freshData = getData();
+        const entryIndex = freshData.dumpEntries.findIndex(e => e.id === tempId);
+        if (entryIndex !== -1) {
+            freshData.dumpEntries[entryIndex] = updatedEntry;
+            localStorage.setItem('dreamy_drift_data_v1', JSON.stringify(freshData));
+            setEntries(freshData.dumpEntries);
+        }
+    } catch (e) {
+        console.error(e);
+    }
     
-    const finalEntry: DumpEntry = { ...tempEntry, aiResponse };
-    const newData = addDumpEntry(finalEntry);
-    
-    setEntries(newData.dumpEntries);
     setLoading(false);
   };
 
@@ -157,11 +216,13 @@ const DumpBox: React.FC = () => {
           {entries.slice().reverse().map((entry) => (
               <div key={entry.id} className="animate-fade-in-up">
                   {/* User Message */}
-                  <div className="flex justify-end mb-2">
-                      <div className="bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-100 dark:border-stone-600 rounded-2xl rounded-tr-none px-4 py-3 max-w-[85%] text-sm shadow-sm">
-                          {entry.text}
+                  {entry.text && (
+                      <div className="flex justify-end mb-2">
+                          <div className="bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-100 dark:border-stone-600 rounded-2xl rounded-tr-none px-4 py-3 max-w-[85%] text-sm shadow-sm">
+                              {entry.text}
+                          </div>
                       </div>
-                  </div>
+                  )}
 
                   {/* AI Response */}
                   {entry.aiResponse && (

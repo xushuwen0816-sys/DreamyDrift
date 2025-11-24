@@ -27,7 +27,14 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
       setWakeTime(existingRecord.wakeTime);
       if (existingRecord.reasons) {
         setSelectedReasons(existingRecord.reasons);
+      } else {
+        setSelectedReasons([]);
       }
+    } else {
+      // Reset to defaults if no record exists for this date
+      setSleepTime('23:30');
+      setWakeTime('07:30');
+      setSelectedReasons([]);
     }
   }, [date]);
 

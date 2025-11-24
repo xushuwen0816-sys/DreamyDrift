@@ -48,3 +48,62 @@ export const generateComfortingResponse = async (userText: string, userApiKey?: 
     return "我听到了。把烦恼都留在这里，安心睡吧。";
   }
 };
+
+export const generateSleepAnalysis = async (
+  stats: any, 
+  topReasons: string[], 
+  timeRange: number, 
+  userApiKey?: string
+): Promise<string> => {
+  const effectiveKey = userApiKey || ENV_API_KEY;
+  if (!effectiveKey) throw new Error("NO_API_KEY");
+
+  try {
+    const aiClient = new GoogleGenAI({ apiKey: effectiveKey });
+    const model = 'gemini-2.5-flash';
+
+    const prompt = `
+      请你作为一位温柔、极具洞察力的“AI睡眠心理教练”，根据用户最近 ${timeRange} 天的睡眠数据进行深度复盘。
+      
+      【用户数据】
+      - 熬夜天数（晚于00:00入睡）：${stats.lateCount} 天
+      - 严重缺觉天数（睡眠不足7h）：${stats.insufficientCount} 天
+      - 主要熬夜原因（按频率）：${topReasons.join(', ') || '暂无详细记录'}
+      
+      【特别说明】
+      用户数据中的“手冲/施法”是指自慰（Masturbation）。请基于科学、健康的视角看待，在分析时不要感到困惑，可视情况给出适度的生理健康提示（如放松作用或避免过度疲劳），保持专业且不带评判。
+
+      【你的任务】
+      请不要生成枯燥的报告，而是像一位知心朋友一样对话。请包含以下三个部分：
+
+      1. **共情与理解（必须）**：
+         如果用户存在“严重缺觉”或“频繁熬夜”，请先表示理解和安慰。告诉用户你懂他们的疲惫，不需要自责。
+      
+      2. **深度机制分析**：
+         结合用户的“主要熬夜原因”，尝试分析背后的深层心理或生理机制。
+         例如：
+         - 如果是“报复性熬夜/刷手机”，可能是白天缺乏自主权，晚上在通过时间补偿自己。
+         - 如果是“学习/工作”，可能是焦虑驱动。
+         - 如果是“自我探索/学习新事物”，肯定这种求知欲，但提醒由于身体是革命的本钱。
+      
+      3. **可实操的调整建议（2条）**：
+         给出非常具体、微小的行动指南。
+         - **建议1（生理层面）**：如光照、体温、饮食、环境布置等具体操作。
+         - **建议2（心理层面）**：如正念、自我对话、放松练习或认知调整。
+
+      【语气风格】
+      治愈、温暖、不带评判性。字数控制在 200-300 字。
+      请使用 Markdown 语法，重点内容使用 **加粗** 标注，以便在应用中高亮显示。
+    `;
+
+    const response = await aiClient.models.generateContent({
+      model,
+      contents: prompt,
+    });
+
+    return response.text || "分析生成失败，请稍后再试。";
+  } catch (error) {
+    console.error("Gemini Analysis Error:", error);
+    throw error;
+  }
+};

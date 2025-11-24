@@ -43,4 +43,8 @@ export interface AppData {
   checklistLogs: DailyChecklistLog;
   dumpEntries: DumpEntry[];
   lastDumpDate: string;
+  latestAnalysis?: {
+    text: string;
+    timestamp: number;
+  };
 }

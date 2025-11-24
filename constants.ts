@@ -13,6 +13,8 @@ export const LATE_REASONS: LateReason[] = [
   { id: 'beh_game', label: '打游戏', category: 'BEHAVIORAL' },
   { id: 'beh_chat', label: '聊天/吃瓜', category: 'BEHAVIORAL' },
   { id: 'beh_work', label: '加班/补作业', category: 'BEHAVIORAL' },
+  { id: 'beh_learn', label: '学习新事物', category: 'BEHAVIORAL' },
+  { id: 'beh_explore', label: '自我探索', category: 'BEHAVIORAL' },
   { id: 'beh_zone', label: '单纯发呆', category: 'BEHAVIORAL' },
   // Physiological
   { id: 'phy_self', label: '手冲/施法', category: 'PHYSIOLOGICAL' },

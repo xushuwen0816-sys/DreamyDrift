@@ -7,6 +7,7 @@ const DEFAULT_DATA: AppData = {
   checklistLogs: {},
   dumpEntries: [],
   lastDumpDate: new Date().toISOString().split('T')[0],
+  latestAnalysis: undefined,
 };
 
 export const getData = (): AppData => {
@@ -88,4 +89,17 @@ export const clearDumpEntries = () => {
     const newData = { ...data, dumpEntries: [] };
     saveData(newData);
     return newData;
+};
+
+export const saveAnalysis = (text: string) => {
+  const data = getData();
+  const newData = {
+    ...data,
+    latestAnalysis: {
+      text,
+      timestamp: Date.now(),
+    }
+  };
+  saveData(newData);
+  return newData;
 };
