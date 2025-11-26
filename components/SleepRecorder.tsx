@@ -1,16 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
 import { SleepRecord } from '../types';
 import { LATE_REASONS } from '../constants';
 import { addSleepRecord, getData } from '../services/storageService';
 import { Calendar, Moon, Sun, Save } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   onSave: () => void;
 }
 
 const SleepRecorder: React.FC<Props> = ({ onSave }) => {
+  const { t, language } = useLanguage();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  // Removed bedTime state
   const [sleepTime, setSleepTime] = useState('23:30');
   const [wakeTime, setWakeTime] = useState('07:30');
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
@@ -18,20 +20,15 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
   const [isLate, setIsLate] = useState(false);
   const [durationStr, setDurationStr] = useState('');
 
-  // Load existing data for the selected date
+  // Load existing data
   useEffect(() => {
     const data = getData();
     const existingRecord = data.sleepRecords.find(r => r.date === date);
     if (existingRecord) {
       setSleepTime(existingRecord.sleepTime);
       setWakeTime(existingRecord.wakeTime);
-      if (existingRecord.reasons) {
-        setSelectedReasons(existingRecord.reasons);
-      } else {
-        setSelectedReasons([]);
-      }
+      setSelectedReasons(existingRecord.reasons || []);
     } else {
-      // Reset to defaults if no record exists for this date
       setSleepTime('23:30');
       setWakeTime('07:30');
       setSelectedReasons([]);
@@ -46,16 +43,14 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
 
     const sleepMins = getMinutes(sleepTime);
     const wakeMins = getMinutes(wakeTime);
-
     const sleepH = parseInt(sleepTime.split(':')[0]);
-    // Consider 00:00 to 12:00 as "Late" (Crossed midnight, essentially "next day")
     const isTechnicallyLate = sleepH >= 0 && sleepH < 12;
     setIsLate(isTechnicallyLate);
 
     let start = sleepMins;
     let end = wakeMins;
-
     let durationMins = 0;
+    
     if (start > end) {
        durationMins = (1440 - start) + end;
     } else {
@@ -64,8 +59,7 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
     
     const hours = Math.floor(durationMins / 60);
     const mins = durationMins % 60;
-    setDurationStr(`${hours}小时 ${mins}分`);
-
+    setDurationStr(`${hours}h ${mins}m`);
   }, [sleepTime, wakeTime]);
 
   const toggleReason = (id: string) => {
@@ -85,83 +79,85 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
     onSave();
   };
 
+  const categories = [
+    { key: 'PSYCHOLOGICAL', label: t.cat_psychological },
+    { key: 'BEHAVIORAL', label: t.cat_behavioral },
+    { key: 'PHYSIOLOGICAL', label: t.cat_physiological },
+    { key: 'EXTERNAL', label: t.cat_external }
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-stone-800 p-5 sm:p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 transition-colors">
-        <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-stone-800 p-5 sm:p-8 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 transition-colors">
+        <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
           <Moon className="w-6 h-6 text-warm-500" />
-          睡眠日记
+          {t.recorder_title}
         </h2>
 
-        {/* Date Picker */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-stone-500 dark:text-stone-400 mb-1">记录哪一晚？</label>
-          <div className="relative">
-             <input 
-              type="date" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl border-none focus:ring-2 focus:ring-warm-200 outline-none text-stone-700 dark:text-stone-200 font-semibold appearance-none"
-            />
-            <Calendar className="absolute left-4 top-3.5 w-5 h-5 text-stone-400 pointer-events-none" />
+        {/* Responsive Grid for Desktop */}
+        <div className="md:grid md:grid-cols-2 md:gap-8">
+          {/* Left Column: Date */}
+          <div className="mb-6 md:mb-0">
+            <label className="block text-sm font-medium text-stone-500 dark:text-stone-400 mb-2">{t.record_date_label}</label>
+            <div className="relative">
+               <input 
+                type="date" 
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-stone-50 dark:bg-stone-700 rounded-xl border-none focus:ring-2 focus:ring-warm-200 outline-none text-stone-700 dark:text-stone-200 font-bold text-lg appearance-none"
+              />
+              <Calendar className="absolute left-4 top-4 w-5 h-5 text-stone-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Right Column: Times */}
+          <div className="grid grid-cols-1 gap-4">
+             <div className="bg-warm-50 dark:bg-warm-900/20 p-4 rounded-2xl relative overflow-hidden">
+                <label className="flex items-center gap-2 text-warm-900 dark:text-warm-200 font-medium mb-2">
+                  <Moon className="w-4 h-4" /> {t.sleep_time}
+                </label>
+                <input 
+                  type="time" 
+                  value={sleepTime}
+                  onChange={(e) => setSleepTime(e.target.value)}
+                  className="w-full min-w-0 bg-transparent p-2 text-lg sm:text-xl text-center font-bold text-warm-600 dark:text-warm-300 focus:outline-none appearance-none"
+                />
+                {isLate && (
+                  <div className="absolute top-2 right-2 text-[10px] font-bold text-rose-500 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-full">
+                    {t.late_alert}
+                  </div>
+                )}
+             </div>
+
+             <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl">
+                <label className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium mb-2">
+                  <Sun className="w-4 h-4" /> {t.wake_time}
+                </label>
+                <input 
+                  type="time" 
+                  value={wakeTime}
+                  onChange={(e) => setWakeTime(e.target.value)}
+                  className="w-full min-w-0 bg-transparent p-2 text-lg sm:text-xl text-center font-bold text-amber-600 dark:text-amber-400 focus:outline-none appearance-none"
+                />
+             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
-           {/* Sleep Time - Now styled blue with Moon icon */}
-           <div className="bg-blue-50 dark:bg-slate-800/50 p-4 rounded-2xl relative overflow-hidden">
-              <label className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-medium mb-2">
-                <Moon className="w-4 h-4" /> 入睡时间
-              </label>
-              <input 
-                type="time" 
-                value={sleepTime}
-                onChange={(e) => setSleepTime(e.target.value)}
-                className="w-full min-w-0 max-w-full bg-white dark:bg-slate-700 p-2 rounded-lg text-lg sm:text-xl text-center font-bold text-blue-600 dark:text-blue-300 focus:outline-none appearance-none"
-              />
-              {isLate && (
-                <div className="mt-2 text-center text-xs font-bold text-rose-500 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-300 py-1 px-2 rounded-full inline-block">
-                  熬夜啦🌙
-                </div>
-              )}
-           </div>
-
-           {/* Wake Time */}
-           <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl">
-              <label className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium mb-2">
-                <Sun className="w-4 h-4" /> 起床时间
-              </label>
-              <input 
-                type="time" 
-                value={wakeTime}
-                onChange={(e) => setWakeTime(e.target.value)}
-                className="w-full min-w-0 max-w-full bg-white dark:bg-amber-900/40 p-2 rounded-lg text-lg sm:text-xl text-center font-bold text-amber-600 dark:text-amber-400 focus:outline-none appearance-none"
-              />
-           </div>
-        </div>
-
-        {/* Result Preview */}
         <div className="mt-6 p-4 bg-stone-50 dark:bg-stone-700 rounded-xl flex justify-between items-center">
-          <span className="text-stone-500 dark:text-stone-300 font-medium">总睡眠时长</span>
-          <span className="text-2xl font-bold text-stone-800 dark:text-stone-100">{durationStr}</span>
+          <span className="text-stone-500 dark:text-stone-300 font-medium">{t.total_duration}</span>
+          <span className="text-xl font-bold text-stone-800 dark:text-stone-100">{durationStr}</span>
         </div>
       </div>
 
-      {/* Late Reasons Section */}
       {isLate && (
-        <div className="bg-white dark:bg-stone-800 p-5 sm:p-6 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 animate-fade-in">
-          <h3 className="text-lg font-bold text-stone-800 dark:text-stone-100 mb-2">为什么这么晚？🥺</h3>
-          <p className="text-stone-500 dark:text-stone-400 text-sm mb-4">诚实记录，才能更好地调整哦。</p>
+        <div className="bg-white dark:bg-stone-800 p-5 sm:p-8 rounded-3xl shadow-sm border border-warm-100 dark:border-stone-700 animate-fade-in">
+          <h3 className="text-lg font-bold text-stone-800 dark:text-stone-100 mb-2">{t.why_late}</h3>
+          <p className="text-stone-500 dark:text-stone-400 text-sm mb-6">{t.be_honest}</p>
           
-          <div className="space-y-4">
-            {[
-              { key: 'PSYCHOLOGICAL', label: '心理因素' },
-              { key: 'BEHAVIORAL', label: '行为习惯' },
-              { key: 'PHYSIOLOGICAL', label: '生理原因' },
-              { key: 'EXTERNAL', label: '外部干扰' }
-            ].map(cat => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {categories.map(cat => (
               <div key={cat.key}>
-                <h4 className="text-xs font-bold text-stone-400 dark:text-stone-500 mb-2">{cat.label}</h4>
+                <h4 className="text-xs font-bold text-stone-400 dark:text-stone-500 mb-3 uppercase tracking-wider">{cat.label}</h4>
                 <div className="flex flex-wrap gap-2">
                   {LATE_REASONS.filter(r => r.category === cat.key).map(reason => (
                     <button
@@ -173,7 +169,8 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
                           : 'bg-white dark:bg-stone-700 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-600 hover:border-warm-300'
                       }`}
                     >
-                      {reason.label}
+                      {/* Look up translation dynamically */}
+                      {(t as any)[reason.label] || reason.label}
                     </button>
                   ))}
                 </div>
@@ -188,7 +185,7 @@ const SleepRecorder: React.FC<Props> = ({ onSave }) => {
         className="w-full bg-warm-500 hover:bg-warm-600 dark:bg-warm-600 dark:hover:bg-warm-500 text-white font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-all flex justify-center items-center gap-2 text-lg"
       >
         <Save className="w-5 h-5" />
-        保存记录
+        {t.save_btn}
       </button>
     </div>
   );
